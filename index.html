@@ -410,6 +410,220 @@
     h1 { font-size: 1.9rem; }
     .season-banner { flex-direction: column; }
   }
+
+  /* ---- Pixel Guide Button ---- */
+  .pixel-guide-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto 2rem;
+    background: linear-gradient(135deg, rgba(76,195,247,0.1), rgba(206,147,216,0.1));
+    border: 1px solid rgba(76,195,247,0.3);
+    color: var(--accent);
+    border-radius: var(--radius);
+    padding: 14px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    letter-spacing: 0.01em;
+  }
+  .pixel-guide-btn:hover {
+    background: linear-gradient(135deg, rgba(76,195,247,0.18), rgba(206,147,216,0.18));
+    border-color: rgba(76,195,247,0.55);
+    transform: translateY(-1px);
+  }
+  .pixel-guide-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+  /* ---- Modal overlay ---- */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(7,9,15,0.82);
+    z-index: 100;
+    align-items: flex-end;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal-sheet {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-bottom: none;
+    border-radius: var(--radius) var(--radius) 0 0;
+    width: 100%;
+    max-width: 720px;
+    max-height: 88vh;
+    overflow-y: auto;
+    padding: 0 0 2rem;
+    animation: slideUp 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  @keyframes slideUp {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .modal-handle-bar {
+    padding: 10px 0 4px;
+    display: flex;
+    justify-content: center;
+    position: sticky;
+    top: 0;
+    background: var(--surface);
+    z-index: 1;
+  }
+
+  .modal-handle { width: 36px; height: 4px; border-radius: 999px; background: var(--border); }
+
+  .modal-handle-row {
+    position: sticky;
+    top: 24px; /* sits below the handle bar */
+    background: var(--surface);
+    padding: 0 1rem 12px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+    z-index: 1;
+  }
+
+  .modal-close {
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 20px;
+    cursor: pointer;
+    line-height: 1;
+    padding: 4px 6px;
+    transition: color 0.15s;
+    flex-shrink: 0;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 1.2rem;
+    color: #fff;
+    font-weight: 400;
+    text-align: center;
+    flex: 1;
+  }
+
+  .modal-body {
+    padding: 1.25rem 1.25rem 0;
+  }
+
+  @media (max-width: 400px) {
+    .modal-body { padding: 1rem 1rem 0; }
+    .modal-title { font-size: 1.05rem; }
+  }
+
+  .modal-intro {
+    font-size: 13px;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .guide-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .guide-section h3 {
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin-bottom: 0.85rem;
+  }
+
+  .step-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  .step-list li {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+  }
+
+  .step-num {
+    flex-shrink: 0;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: rgba(76,195,247,0.12);
+    border: 1px solid rgba(76,195,247,0.25);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+  }
+
+  .guide-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 1.25rem 0;
+  }
+
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .setting-chip {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem;
+  }
+
+  .setting-chip .chip-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .setting-chip .chip-val {
+    font-size: 14px;
+    font-weight: 500;
+    color: #fff;
+  }
+
+  .tip-banner {
+    background: rgba(255,202,40,0.07);
+    border: 1px solid rgba(255,202,40,0.2);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    font-size: 12.5px;
+    color: var(--text);
+    line-height: 1.55;
+  }
+
+  .tip-banner strong { color: var(--amber); }
+
 </style>
 </head>
 <body>
@@ -533,6 +747,18 @@
     <span class="season-tag" id="season-tag">–</span>
   </div>
 
+
+  <!-- Pixel Guide Button -->
+  <div style="text-align:center;margin-bottom:1.5rem;">
+    <button class="pixel-guide-btn" id="open-pixel-guide">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="5" y="2" width="14" height="20" rx="2"/><circle cx="12" cy="17" r="1"/>
+        <path d="M9 7h6M9 11h4"/>
+      </svg>
+      📷 Pixel 8 Pro — Aurora Photography Guide
+    </button>
+  </div>
+
   <div class="reload-row">
     <button id="reload">↻ Refresh data</button>
   </div>
@@ -542,6 +768,84 @@
     Hobart visibility thresholds: Kp ≥ 7 naked-eye · Kp ≥ 5 photographic · Mag. lat. ~49.5°S<br>
     Data refreshes every 3 hours. Page auto-refreshes every 15 minutes.
   </footer>
+
+<!-- Pixel Guide Modal -->
+<div class="modal-overlay" id="pixel-modal" role="dialog" aria-modal="true" aria-label="Pixel 8 Pro Aurora Photography Guide">
+  <div class="modal-sheet">
+    <div class="modal-handle-bar"><div class="modal-handle"></div></div>
+    <div class="modal-handle-row">
+      <span class="modal-title">📱 Pixel 8 Pro Aurora Guide</span>
+      <button class="modal-close" id="close-pixel-guide" aria-label="Close guide">✕</button>
+    </div>
+    <div class="modal-body">
+
+      <p class="modal-intro">The Pixel 8 Pro's <strong>Astrophotography mode</strong> uses 16 stacked exposures over ~4 minutes to reveal aurora and stars far beyond what your eyes can see — even at Kp 4–5 when the aurora is invisible to the naked eye.</p>
+
+      <div class="guide-section">
+        <h3>Step 1 — Set up Night Sight + Astro Mode</h3>
+        <ul class="step-list">
+          <li><span class="step-num">1</span>Open the <strong>Camera app</strong> on your Pixel 8 Pro.</li>
+          <li><span class="step-num">2</span>Swipe through the shooting modes at the bottom and tap <strong>Night Sight</strong>.</li>
+          <li><span class="step-num">3</span>Tap the <strong>controls icon</strong> (bottom right corner of the viewfinder).</li>
+          <li><span class="step-num">4</span>Swipe the <strong>Night Sight slider</strong> all the way to <strong>Astro</strong>. The shutter icon will change to a star ✦ symbol — that means Astro mode is active.</li>
+          <li><span class="step-num">5</span><em>Alternatively (newer app versions):</em> In Night Sight, tap <strong>Settings → More settings → Advanced</strong> and toggle on <strong>"Enable timelapse for astrophotography"</strong> to also capture a short timelapse alongside your photo.</li>
+        </ul>
+      </div>
+
+      <div class="guide-divider"></div>
+
+      <div class="guide-section">
+        <h3>Step 2 — Before you shoot</h3>
+        <ul class="step-list">
+          <li><span class="step-num">1</span>Mount your phone on a <strong>tripod</strong> or rest it on a stable surface — even the slightest movement during the 4-minute exposure will blur the shot.</li>
+          <li><span class="step-num">2</span>Point it at the <strong>southern horizon</strong> (aurora australis rises from the south). Tilt slightly upward to include the horizon for context.</li>
+          <li><span class="step-num">3</span>Set focus to <strong>far / infinity</strong> — tap the focus ring and drag it to the furthest end.</li>
+          <li><span class="step-num">4</span>Wait at least <strong>45–90 minutes after sunset</strong> for the sky to reach full darkness.</li>
+          <li><span class="step-num">5</span>Use the <strong>3-second timer</strong> (Settings in Night Sight) so your tap doesn't shake the phone when the shot starts.</li>
+        </ul>
+      </div>
+
+      <div class="guide-divider"></div>
+
+      <div class="guide-section">
+        <h3>Recommended settings</h3>
+        <div class="settings-grid">
+          <div class="setting-chip"><div class="chip-label">Mode</div><div class="chip-val">Night Sight → Astro</div></div>
+          <div class="setting-chip"><div class="chip-label">Exposure</div><div class="chip-val">~4 min (auto)</div></div>
+          <div class="setting-chip"><div class="chip-label">Focus</div><div class="chip-val">Infinity / Far</div></div>
+          <div class="setting-chip"><div class="chip-label">Zoom</div><div class="chip-val">1× (main lens)</div></div>
+          <div class="setting-chip"><div class="chip-label">Timer</div><div class="chip-val">3 seconds</div></div>
+          <div class="setting-chip"><div class="chip-label">Flash</div><div class="chip-val">Off</div></div>
+          <div class="setting-chip"><div class="chip-label">HDR+</div><div class="chip-val">On (default)</div></div>
+          <div class="setting-chip"><div class="chip-label">Timelapse</div><div class="chip-val">Enable in Advanced</div></div>
+        </div>
+        <p style="font-size:11px;color:var(--muted);margin-top:0.6rem;">⚠️ Astrophotography mode only works at <strong>1× zoom or higher</strong> on Pixel 4a (5G) and later — ultrawide won't trigger it.</p>
+      </div>
+
+      <div class="guide-divider"></div>
+
+      <div class="guide-section">
+        <h3>Pro tips for aurora shots</h3>
+        <ul class="step-list">
+          <li><span class="step-num">💡</span><strong>Shoot even at low Kp.</strong> The Pixel camera reveals aurora that eyes miss entirely. At Kp 4–5 you may see nothing, but the 4-min exposure can pick up vivid greens and purples.</li>
+          <li><span class="step-num">🌑</span><strong>New moon nights are best.</strong> Moonlight washes out faint aurora — check the lunar phase before heading out.</li>
+          <li><span class="step-num">🔆</span><strong>Edit in Google Photos.</strong> After shooting, try bumping <em>Brightness</em>, <em>Highlights</em>, and <em>Colour</em> in Google Photos. Aurora often looks muted straight out of camera but pops with a small tweak.</li>
+          <li><span class="step-num">🎬</span><strong>Timelapse is worth enabling.</strong> The Astrophoto timelapse captures a 1-second clip of the sky brightening over 4 minutes — great for social sharing even when the still photo looks quiet.</li>
+          <li><span class="step-num">🔋</span><strong>Bring a power bank.</strong> A single 4-minute Astro shot is fine, but if you're shooting multiple frames across an hour the battery drains fast in cold night air.</li>
+          <li><span class="step-num">📍</span><strong>Go dark.</strong> Drive at least 20–30 min south of Hobart. South Arm Peninsula and Clifton Beach are ideal — low light pollution, wide southern horizon.</li>
+        </ul>
+      </div>
+
+      <div class="guide-divider"></div>
+
+      <div class="tip-banner">
+        <strong>Aurora vs Stars mode?</strong> For aurora, standard <strong>Night Sight</strong> (not full Astro) can sometimes give better results when the aurora is actively moving — Astro's 4-min exposure can blur fast-moving curtains. Try both: Night Sight for active displays, Astro mode for faint or static glows.
+      </div>
+
+    </div>
+  </div>
+</div>
+
 </div>
 
 <p class="error-msg" id="error-msg">Could not load space weather data. Check your connection and try again.</p>
@@ -858,6 +1162,21 @@ document.getElementById('reload').addEventListener('click', () => {
 
 /* Auto-refresh every 15 min */
 setInterval(loadData, 15 * 60 * 1000);
+
+/* ---- Pixel Guide Modal ---- */
+const modal = document.getElementById('pixel-modal');
+document.getElementById('open-pixel-guide').addEventListener('click', () => {
+  modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+});
+function closeModal() {
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+document.getElementById('close-pixel-guide').addEventListener('click', closeModal);
+modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
 </script>
 </body>
 </html>
