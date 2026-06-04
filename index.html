@@ -576,14 +576,24 @@ function kpToColor(kp) {
   return '#69f0ae';
 }
 
-function kpToStatus(kp, cloudPct) {
+function kpToStatus(kp, cloudPct, isNight) {
   const overcast = cloudPct !== null && cloudPct > 75;
-  if (kp >= 7) return overcast ? { text: 'Storm — but overcast ☁', color: '#ef5350', glow: '#ef5350' }
-                               : { text: 'Visible overhead! 🌌', color: '#ef5350', glow: '#ef5350' };
-  if (kp >= 5) return overcast ? { text: 'Camera only — cloudy ☁', color: '#ffca28', glow: '#ffca28' }
-                               : { text: 'Visible on photos 📸', color: '#ffca28', glow: '#ffca28' };
-  if (kp >= 4) return { text: 'Watch the horizon', color: '#26c6da', glow: '#26c6da' };
-  return { text: 'Unlikely tonight', color: '#69f0ae', glow: '#4fc3f7' };
+
+  if (isNight) {
+    // User can go outside right now — report current conditions
+    if (kp >= 7) return overcast ? { text: 'Storm — but overcast ☁', color: '#ef5350', glow: '#ef5350' }
+                                 : { text: 'Visible overhead! 🌌', color: '#ef5350', glow: '#ef5350' };
+    if (kp >= 5) return overcast ? { text: 'Camera only — cloudy ☁', color: '#ffca28', glow: '#ffca28' }
+                                 : { text: 'Visible on photos 📸', color: '#ffca28', glow: '#ffca28' };
+    if (kp >= 4) return { text: 'Watch the horizon 👀', color: '#26c6da', glow: '#26c6da' };
+    return { text: 'Quiet — unlikely right now', color: '#69f0ae', glow: '#4fc3f7' };
+  } else {
+    // Daytime — frame as a forecast for tonight
+    if (kp >= 7) return { text: 'Storm active — watch tonight! 🌌', color: '#ef5350', glow: '#ef5350' };
+    if (kp >= 5) return { text: 'Worth watching tonight 📸', color: '#ffca28', glow: '#ffca28' };
+    if (kp >= 4) return { text: 'Marginal — keep an eye out', color: '#26c6da', glow: '#26c6da' };
+    return { text: 'Low activity — check back tonight', color: '#69f0ae', glow: '#4fc3f7' };
+  }
 }
 
 function gScale(kp) {
@@ -654,7 +664,7 @@ async function loadData() {
     const season = currentSeason();
 
     /* Status */
-    const status = kpToStatus(currentKp, cloudPct);
+    const status = kpToStatus(currentKp, cloudPct, night);
     const color = kpToColor(currentKp);
 
     /* Update badge */
