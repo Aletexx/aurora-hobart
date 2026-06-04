@@ -1,0 +1,831 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Aurora Australis — Hobart, Tasmania</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #07090f;
+    --surface: #0d1120;
+    --surface2: #131829;
+    --border: rgba(255,255,255,0.07);
+    --text: #e8eaf6;
+    --muted: #7b83ab;
+    --accent: #4fc3f7;
+    --green: #69f0ae;
+    --amber: #ffca28;
+    --red: #ef5350;
+    --purple: #ce93d8;
+    --teal: #26c6da;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* Stars canvas */
+  #stars-canvas {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    opacity: 0.5;
+  }
+
+  .page {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  /* Header */
+  header {
+    text-align: center;
+    padding: 3rem 0 2rem;
+  }
+
+  .location-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 5px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+
+  .location-pill svg { width: 13px; height: 13px; }
+
+  h1 {
+    font-family: 'DM Serif Display', serif;
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 400;
+    line-height: 1.15;
+    color: #fff;
+    margin-bottom: 0.5rem;
+  }
+
+  h1 em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  .subtitle {
+    font-size: 14px;
+    color: var(--muted);
+    margin-bottom: 2rem;
+  }
+
+  /* Last updated */
+  #last-updated {
+    font-size: 11px;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 2rem;
+    letter-spacing: 0.04em;
+  }
+
+  .dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--green); margin-right: 5px; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  /* Status card */
+  .status-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 2rem;
+    margin-bottom: 1.25rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .status-glow {
+    position: absolute;
+    inset: 0;
+    opacity: 0.04;
+    pointer-events: none;
+    border-radius: var(--radius);
+    transition: background 0.6s;
+  }
+
+  .status-label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.75rem;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.45rem 1.5rem;
+    border-radius: 999px;
+    font-size: 1rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.25rem;
+    transition: background 0.4s, color 0.4s;
+  }
+
+  .kp-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .kp-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 3.5rem;
+    font-weight: 400;
+    line-height: 1;
+    color: #fff;
+  }
+
+  .kp-label {
+    text-align: left;
+  }
+  .kp-label span { display: block; font-size: 12px; color: var(--muted); }
+  .kp-label strong { font-size: 14px; font-weight: 500; }
+
+  .hobart-threshold {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .hobart-threshold strong { color: var(--text); }
+
+  /* Meter */
+  .kp-meter-wrap {
+    margin: 1.25rem auto 0;
+    max-width: 400px;
+  }
+
+  .kp-meter-track {
+    height: 8px;
+    border-radius: 999px;
+    background: var(--surface2);
+    position: relative;
+    overflow: visible;
+  }
+
+  .kp-meter-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s;
+  }
+
+  .kp-meter-thumb {
+    position: absolute;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    border: 2px solid var(--bg);
+    transition: left 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.4s;
+  }
+
+  .kp-meter-markers {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 0;
+    margin-top: 6px;
+    font-size: 10px;
+    color: var(--muted);
+  }
+
+  /* Metric grid */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .metric-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+
+  .metric-card .label {
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .metric-card .label svg { width: 14px; height: 14px; flex-shrink: 0; }
+
+  .metric-card .value {
+    font-size: 1.6rem;
+    font-weight: 300;
+    color: #fff;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+  }
+
+  .metric-card .desc {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  /* Chart card */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .chart-card h2 {
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+
+  .chart-wrap { position: relative; height: 180px; }
+
+  /* Tips */
+  .tips-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .tip-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .tip-card .tip-icon {
+    font-size: 1.25rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .tip-card h3 {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text);
+  }
+
+  .tip-card p {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+
+  /* Season banner */
+  .season-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    font-size: 13px;
+  }
+
+  .season-banner .season-label { color: var(--muted); }
+  .season-tag {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  /* Alert band */
+  .alert-band {
+    background: linear-gradient(90deg, rgba(76,195,247,0.08), rgba(206,147,216,0.08));
+    border: 1px solid rgba(76,195,247,0.2);
+    border-radius: var(--radius);
+    padding: 1rem 1.5rem;
+    margin-bottom: 1.25rem;
+    font-size: 13px;
+    color: var(--text);
+    line-height: 1.5;
+    display: none;
+  }
+
+  .alert-band.show { display: block; }
+
+  /* Reload */
+  .reload-row {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  button#reload {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 999px;
+    padding: 8px 24px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: border-color 0.2s, color 0.2s;
+  }
+
+  button#reload:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.8;
+    opacity: 0.7;
+  }
+
+  footer a { color: var(--muted); text-decoration: underline; }
+
+  /* Loading state */
+  .skeleton {
+    background: linear-gradient(90deg, var(--surface) 25%, var(--surface2) 50%, var(--surface) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.4s infinite;
+    border-radius: 4px;
+    color: transparent !important;
+  }
+
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+
+  .error-msg {
+    text-align: center;
+    color: var(--red);
+    font-size: 13px;
+    padding: 1rem;
+    display: none;
+  }
+
+  @media (max-width: 480px) {
+    .kp-number { font-size: 2.75rem; }
+    h1 { font-size: 1.9rem; }
+    .season-banner { flex-direction: column; }
+  }
+</style>
+</head>
+<body>
+
+<canvas id="stars-canvas"></canvas>
+
+<div class="page">
+  <header>
+    <div class="location-pill">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>
+      Hobart, Tasmania · 42.9°S
+    </div>
+    <h1>Aurora <em>Australis</em><br>Forecast</h1>
+    <p class="subtitle">Live Kp index · Space weather conditions · Visibility guide</p>
+  </header>
+
+  <p id="last-updated"><span class="dot"></span>Loading data…</p>
+
+  <div id="alert-band" class="alert-band"></div>
+
+  <!-- Main status -->
+  <div class="status-card" id="status-card">
+    <div class="status-glow" id="status-glow"></div>
+    <div class="status-label">Current visibility in Hobart</div>
+    <div class="status-badge skeleton" id="status-badge" style="min-width:140px;">——</div>
+    <div class="kp-row">
+      <div class="kp-number skeleton" id="kp-value" style="min-width:80px;">–.–</div>
+      <div class="kp-label">
+        <strong>Kp index</strong>
+        <span>Updated every 3 hrs</span>
+      </div>
+    </div>
+    <div class="hobart-threshold">Hobart needs <strong>Kp ≥ 7.0</strong> for naked-eye aurora · <strong>Kp ≥ 5</strong> for photographic</div>
+    <div class="kp-meter-wrap">
+      <div class="kp-meter-track">
+        <div class="kp-meter-fill" id="meter-fill" style="width:0%;background:var(--green)"></div>
+        <div class="kp-meter-thumb" id="meter-thumb" style="left:0%;background:var(--green)"></div>
+      </div>
+      <div class="kp-meter-markers">
+        <span>0</span><span>1</span><span>2</span><span>3</span><span>4</span><span>5</span><span>6</span><span>7</span><span>8</span><span>9</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Metric cards -->
+  <div class="metrics-grid">
+
+    <div class="metric-card">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z"/></svg>
+        Cloud Cover
+      </div>
+      <div class="value skeleton" id="cloud-val" style="min-width:60px;">–%</div>
+      <div class="desc" id="cloud-desc">Hobart sky conditions</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>
+        Night Status
+      </div>
+      <div class="value" id="night-val" style="font-size:1rem;padding-top:0.35rem;">–</div>
+      <div class="desc" id="night-desc">Hobart, AEST</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+        Geomagnetic
+      </div>
+      <div class="value skeleton" id="geo-val" style="min-width:60px;">–</div>
+      <div class="desc" id="geo-desc">G-scale storm level</div>
+    </div>
+
+    <div class="metric-card">
+      <div class="label">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
+        Best Season
+      </div>
+      <div class="value" style="font-size:1rem;padding-top:0.35rem;" id="season-val">–</div>
+      <div class="desc">Mar–Sep, equinoxes peak</div>
+    </div>
+
+  </div>
+
+  <!-- Kp forecast chart -->
+  <div class="chart-card">
+    <h2>3-Day Kp forecast</h2>
+    <div class="chart-wrap">
+      <canvas id="kpChart" role="img" aria-label="3-day Kp index forecast for Hobart aurora watching">Loading chart…</canvas>
+    </div>
+  </div>
+
+  <!-- Tips -->
+  <div class="tips-grid">
+    <div class="tip-card">
+      <div class="tip-icon">🔭</div>
+      <h3>Best viewing spots</h3>
+      <p>South Arm Peninsula, Clifton Beach, Cape Bruny — away from Hobart's city lights and with clear southern horizons.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">📸</div>
+      <h3>Photography tip</h3>
+      <p>Even at Kp 5–6 a camera can capture aurora invisible to the naked eye. Use ISO 800–3200, f/2.8, 10–20 s exposures.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">🌒</div>
+      <h3>Moon & darkness</h3>
+      <p>A new moon is ideal. Observe 1–2 hrs after sunset when the sky is fully dark and before the moon rises.</p>
+    </div>
+    <div class="tip-card">
+      <div class="tip-icon">⚡</div>
+      <h3>Solar cycle note</h3>
+      <p>We are near Solar Cycle 25 maximum (2024–2026), meaning higher-than-average aurora activity — a great window for sightings.</p>
+    </div>
+  </div>
+
+  <!-- Season banner -->
+  <div class="season-banner">
+    <span class="season-label">Viewing season — best nights: March to September, with peak activity around equinoxes.</span>
+    <span class="season-tag" id="season-tag">–</span>
+  </div>
+
+  <div class="reload-row">
+    <button id="reload">↻ Refresh data</button>
+  </div>
+
+  <footer>
+    Kp data from <a href="https://www.swpc.noaa.gov" target="_blank" rel="noopener">NOAA Space Weather Prediction Center</a> · Cloud cover from <a href="https://open-meteo.com" target="_blank" rel="noopener">Open-Meteo</a><br>
+    Hobart visibility thresholds: Kp ≥ 7 naked-eye · Kp ≥ 5 photographic · Mag. lat. ~49.5°S<br>
+    Data refreshes every 3 hours. Page auto-refreshes every 15 minutes.
+  </footer>
+</div>
+
+<p class="error-msg" id="error-msg">Could not load space weather data. Check your connection and try again.</p>
+
+<script>
+/* ---- Star field ---- */
+const starCanvas = document.getElementById('stars-canvas');
+const sCtx = starCanvas.getContext('2d');
+function drawStars() {
+  starCanvas.width = window.innerWidth;
+  starCanvas.height = window.innerHeight;
+  sCtx.clearRect(0, 0, starCanvas.width, starCanvas.height);
+  for (let i = 0; i < 220; i++) {
+    const x = Math.random() * starCanvas.width;
+    const y = Math.random() * starCanvas.height;
+    const r = Math.random() * 1.3;
+    const a = Math.random() * 0.8 + 0.1;
+    sCtx.beginPath();
+    sCtx.arc(x, y, r, 0, Math.PI * 2);
+    sCtx.fillStyle = `rgba(255,255,255,${a})`;
+    sCtx.fill();
+  }
+}
+drawStars();
+window.addEventListener('resize', drawStars);
+
+/* ---- Helpers ---- */
+function kpToColor(kp) {
+  if (kp >= 7) return '#ef5350';
+  if (kp >= 5) return '#ffca28';
+  if (kp >= 4) return '#26c6da';
+  return '#69f0ae';
+}
+
+function kpToStatus(kp, cloudPct) {
+  const overcast = cloudPct > 75;
+  if (kp >= 7) return overcast ? { text: 'Storm — but overcast ☁', color: '#ef5350', glow: '#ef5350' }
+                               : { text: 'Visible overhead! 🌌', color: '#ef5350', glow: '#ef5350' };
+  if (kp >= 5) return overcast ? { text: 'Camera only — cloudy ☁', color: '#ffca28', glow: '#ffca28' }
+                               : { text: 'Visible on photos 📸', color: '#ffca28', glow: '#ffca28' };
+  if (kp >= 4) return { text: 'Watch the horizon', color: '#26c6da', glow: '#26c6da' };
+  return { text: 'Unlikely tonight', color: '#69f0ae', glow: '#4fc3f7' };
+}
+
+function gScale(kp) {
+  if (kp >= 9) return 'G5 — Extreme';
+  if (kp >= 8) return 'G4 — Severe';
+  if (kp >= 7) return 'G3 — Strong';
+  if (kp >= 6) return 'G2 — Moderate';
+  if (kp >= 5) return 'G1 — Minor';
+  return 'G0 — Quiet';
+}
+
+function isNightInHobart() {
+  const now = new Date();
+  const hobart = new Date(now.toLocaleString('en-AU', { timeZone: 'Australia/Hobart' }));
+  const h = hobart.getHours();
+  return h >= 21 || h < 6;
+}
+
+function currentSeason() {
+  const now = new Date();
+  const hobart = new Date(now.toLocaleString('en-AU', { timeZone: 'Australia/Hobart' }));
+  const m = hobart.getMonth() + 1;
+  if (m >= 3 && m <= 9) return { label: 'Peak season ✦', bg: 'rgba(76,195,247,0.12)', color: '#4fc3f7' };
+  return { label: 'Off season', bg: 'rgba(123,131,171,0.12)', color: '#7b83ab' };
+}
+
+let kpChart = null;
+
+/* ---- Fetch & render ---- */
+async function loadData() {
+  document.getElementById('error-msg').style.display = 'none';
+
+  try {
+    const [kpRes, forecastRes, weatherRes] = await Promise.all([
+      fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
+      fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json'),
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=-42.8826&longitude=147.3257&current=cloud_cover&timezone=Australia%2FHobart')
+    ]);
+
+    const kpData = await kpRes.json();
+    const forecastData = await forecastRes.json();
+    const weatherData = await weatherRes.json();
+
+    /* Current Kp — last observed value */
+    const recent = kpData.slice(-6).reverse().find(row => row[1] !== '-1' && row[1] !== 'Kp');
+    const currentKp = parseFloat(recent ? recent[1] : 0);
+
+    /* Cloud cover */
+    const cloudPct = weatherData.current?.cloud_cover ?? 0;
+
+    /* Night status */
+    const night = isNightInHobart();
+
+    /* Season */
+    const season = currentSeason();
+
+    /* Status */
+    const status = kpToStatus(currentKp, cloudPct);
+    const color = kpToColor(currentKp);
+
+    /* Update badge */
+    const badge = document.getElementById('status-badge');
+    badge.classList.remove('skeleton');
+    badge.textContent = status.text;
+    badge.style.background = status.color + '22';
+    badge.style.color = status.color;
+    badge.style.border = `1px solid ${status.color}44`;
+
+    /* Update glow */
+    document.getElementById('status-glow').style.background = status.glow;
+    document.getElementById('status-glow').style.opacity = '0.07';
+
+    /* Update Kp number */
+    const kpEl = document.getElementById('kp-value');
+    kpEl.classList.remove('skeleton');
+    kpEl.textContent = currentKp.toFixed(1);
+    kpEl.style.color = color;
+
+    /* Meter */
+    const pct = Math.min(currentKp / 9 * 100, 100);
+    document.getElementById('meter-fill').style.width = pct + '%';
+    document.getElementById('meter-fill').style.background = color;
+    document.getElementById('meter-thumb').style.left = pct + '%';
+    document.getElementById('meter-thumb').style.background = color;
+
+    /* Cloud */
+    const cloudEl = document.getElementById('cloud-val');
+    cloudEl.classList.remove('skeleton');
+    cloudEl.textContent = cloudPct + '%';
+    cloudEl.style.color = cloudPct > 75 ? '#ef5350' : cloudPct > 40 ? '#ffca28' : '#69f0ae';
+    document.getElementById('cloud-desc').textContent = cloudPct > 75 ? 'Heavy cloud — poor viewing' : cloudPct > 40 ? 'Partly cloudy' : 'Good sky conditions';
+
+    /* Night */
+    document.getElementById('night-val').textContent = night ? '🌙 Night time' : '☀️ Daytime';
+    document.getElementById('night-val').style.color = night ? '#ce93d8' : '#ffca28';
+    document.getElementById('night-desc').textContent = night ? 'Optimal viewing window' : 'Wait for darkness';
+
+    /* G-scale */
+    const geoEl = document.getElementById('geo-val');
+    geoEl.classList.remove('skeleton');
+    geoEl.style.fontSize = '0.95rem';
+    geoEl.style.paddingTop = '0.35rem';
+    geoEl.textContent = gScale(currentKp);
+    geoEl.style.color = color;
+    document.getElementById('geo-desc').textContent = 'NOAA geomagnetic scale';
+
+    /* Season */
+    document.getElementById('season-val').textContent = season.label.split(' ')[0] === 'Peak' ? '🌟 Peak season' : '❄️ Off season';
+    const tag = document.getElementById('season-tag');
+    tag.textContent = season.label;
+    tag.style.background = season.bg;
+    tag.style.color = season.color;
+
+    /* Alert band */
+    if (currentKp >= 7) {
+      const band = document.getElementById('alert-band');
+      band.classList.add('show');
+      band.innerHTML = `<strong style="color:#ef5350">⚡ Geomagnetic storm alert</strong> — Kp ${currentKp.toFixed(1)} detected. Aurora should be visible from Hobart${cloudPct > 75 ? ', but heavy cloud cover is blocking the sky' : ' with good viewing conditions'}. Head south immediately!`;
+    } else if (currentKp >= 5) {
+      const band = document.getElementById('alert-band');
+      band.classList.add('show');
+      band.innerHTML = `<strong style="color:#ffca28">📸 Photo opportunity</strong> — Kp ${currentKp.toFixed(1)} is active. A camera on a tripod may capture aurora on the southern horizon from Hobart.`;
+    }
+
+    /* Last updated */
+    const ts = new Date();
+    const timeStr = ts.toLocaleTimeString('en-AU', { timeZone: 'Australia/Hobart', hour: '2-digit', minute: '2-digit' });
+    document.getElementById('last-updated').innerHTML = `<span class="dot"></span>Live data · updated ${timeStr} AEST`;
+
+    /* Chart */
+    buildChart(forecastData, currentKp);
+
+  } catch (e) {
+    console.error(e);
+    document.getElementById('error-msg').style.display = 'block';
+    document.getElementById('last-updated').textContent = 'Data unavailable — check connection';
+  }
+}
+
+function buildChart(data, currentKp) {
+  const rows = data.slice(1).filter(r => r[1] !== 'predicted' && r[1] !== '' && r[0]);
+  const labels = [];
+  const values = [];
+
+  rows.forEach(r => {
+    try {
+      const d = new Date(r[0]);
+      const label = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', hour: '2-digit', timeZone: 'Australia/Hobart' });
+      labels.push(label);
+      values.push(parseFloat(r[1]) || 0);
+    } catch {}
+  });
+
+  const pointColors = values.map(v => kpToColor(v));
+
+  if (kpChart) kpChart.destroy();
+
+  const ctx = document.getElementById('kpChart').getContext('2d');
+  kpChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels.slice(0, 24),
+      datasets: [
+        {
+          label: 'Kp forecast',
+          data: values.slice(0, 24),
+          borderColor: '#4fc3f7',
+          backgroundColor: 'rgba(76,195,247,0.05)',
+          borderWidth: 2,
+          pointBackgroundColor: pointColors.slice(0, 24),
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          fill: true,
+          tension: 0.35
+        },
+        {
+          label: 'Hobart threshold (Kp 7)',
+          data: Array(Math.min(values.length, 24)).fill(7),
+          borderColor: 'rgba(239,83,80,0.5)',
+          borderWidth: 1.5,
+          borderDash: [6, 3],
+          pointRadius: 0,
+          fill: false,
+          tension: 0
+        },
+        {
+          label: 'Photo threshold (Kp 5)',
+          data: Array(Math.min(values.length, 24)).fill(5),
+          borderColor: 'rgba(255,202,40,0.4)',
+          borderWidth: 1.5,
+          borderDash: [4, 4],
+          pointRadius: 0,
+          fill: false,
+          tension: 0
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0d1120',
+          borderColor: 'rgba(255,255,255,0.08)',
+          borderWidth: 1,
+          titleColor: '#e8eaf6',
+          bodyColor: '#7b83ab',
+          callbacks: {
+            label: ctx => {
+              if (ctx.datasetIndex === 0) return ` Kp ${ctx.parsed.y.toFixed(1)}`;
+              if (ctx.datasetIndex === 1) return ' Naked-eye threshold';
+              return ' Photo threshold';
+            }
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: '#7b83ab', font: { size: 10 }, maxRotation: 45, autoSkip: true, maxTicksLimit: 10 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        },
+        y: {
+          min: 0, max: 9,
+          ticks: { color: '#7b83ab', font: { size: 11 }, stepSize: 1 },
+          grid: { color: 'rgba(255,255,255,0.04)' }
+        }
+      }
+    }
+  });
+}
+
+/* Init */
+loadData();
+document.getElementById('reload').addEventListener('click', () => {
+  document.getElementById('alert-band').classList.remove('show');
+  loadData();
+});
+
+/* Auto-refresh every 15 min */
+setInterval(loadData, 15 * 60 * 1000);
+</script>
+</body>
+</html>
