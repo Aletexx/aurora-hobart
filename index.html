@@ -629,18 +629,23 @@ async function loadData() {
     /* Cloud cover — best-effort, silently falls back to null if it fails */
     let cloudPct = null;
     try {
-      const weatherRes = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-42.8826&longitude=147.3257&current=cloud_cover&timezone=Australia%2FHobart');
+      // wttr.in has reliable CORS headers; returns cloudcover 0-100 in current_condition
+      const weatherRes = await fetch('https://wttr.in/Hobart,Tasmania?format=j1');
       if (weatherRes.ok) {
         const weatherData = await weatherRes.json();
-        cloudPct = weatherData.current?.cloud_cover ?? null;
+        const cc = weatherData?.current_condition?.[0]?.cloudcover;
+        cloudPct = cc !== undefined ? parseInt(cc, 10) : null;
       }
     } catch {
       /* weather unavailable — UI will show N/A gracefully */
     }
 
-    /* Current Kp — last observed value */
-    const recent = kpData.slice(-6).reverse().find(row => row[1] !== '-1' && row[1] !== 'Kp');
-    const currentKp = parseFloat(recent ? recent[1] : 0);
+    /* Current Kp — skip header row and any non-numeric sentinels like "-1" or "Kp" */
+    const recent = kpData.slice(1).reverse().find(row => {
+      const v = parseFloat(row[1]);
+      return !isNaN(v) && v >= 0;
+    });
+    const currentKp = recent ? (parseFloat(recent[1]) || 0) : 0;
 
     /* Night status */
     const night = isNightInHobart();
@@ -738,16 +743,19 @@ async function loadData() {
 }
 
 function buildChart(data, currentKp) {
-  const rows = data.slice(1).filter(r => r[1] !== 'predicted' && r[1] !== '' && r[0]);
+  // Forecast rows: ["2026-06-04 00:00:00", "3.67", "predicted"]
+  // Skip header row (index 0) and only keep rows with a numeric Kp value
+  const rows = data.slice(1).filter(r => r[0] && r[1] && !isNaN(parseFloat(r[1])));
   const labels = [];
   const values = [];
 
   rows.forEach(r => {
     try {
-      const d = new Date(r[0]);
-      const label = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', hour: '2-digit', timeZone: 'Australia/Hobart' });
+      // NOAA uses "YYYY-MM-DD HH:MM:SS" — replace space with T for reliable parsing
+      const d = new Date(r[0].replace(' ', 'T') + 'Z');
+      const label = d.toLocaleString('en-AU', { weekday: 'short', day: 'numeric', hour: '2-digit', hour12: false, timeZone: 'Australia/Hobart' });
       labels.push(label);
-      values.push(parseFloat(r[1]) || 0);
+      values.push(parseFloat(r[1]));
     } catch {}
   });
 
