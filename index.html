@@ -577,7 +577,7 @@ function kpToColor(kp) {
 }
 
 function kpToStatus(kp, cloudPct) {
-  const overcast = cloudPct > 75;
+  const overcast = cloudPct !== null && cloudPct > 75;
   if (kp >= 7) return overcast ? { text: 'Storm — but overcast ☁', color: '#ef5350', glow: '#ef5350' }
                                : { text: 'Visible overhead! 🌌', color: '#ef5350', glow: '#ef5350' };
   if (kp >= 5) return overcast ? { text: 'Camera only — cloudy ☁', color: '#ffca28', glow: '#ffca28' }
@@ -617,22 +617,30 @@ async function loadData() {
   document.getElementById('error-msg').style.display = 'none';
 
   try {
-    const [kpRes, forecastRes, weatherRes] = await Promise.all([
+    /* NOAA fetches are critical — fail loudly if these don't work */
+    const [kpRes, forecastRes] = await Promise.all([
       fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index.json'),
       fetch('https://services.swpc.noaa.gov/products/noaa-planetary-k-index-forecast.json'),
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=-42.8826&longitude=147.3257&current=cloud_cover&timezone=Australia%2FHobart')
     ]);
 
     const kpData = await kpRes.json();
     const forecastData = await forecastRes.json();
-    const weatherData = await weatherRes.json();
+
+    /* Cloud cover — best-effort, silently falls back to null if it fails */
+    let cloudPct = null;
+    try {
+      const weatherRes = await fetch('https://api.open-meteo.com/v1/forecast?latitude=-42.8826&longitude=147.3257&current=cloud_cover&timezone=Australia%2FHobart');
+      if (weatherRes.ok) {
+        const weatherData = await weatherRes.json();
+        cloudPct = weatherData.current?.cloud_cover ?? null;
+      }
+    } catch {
+      /* weather unavailable — UI will show N/A gracefully */
+    }
 
     /* Current Kp — last observed value */
     const recent = kpData.slice(-6).reverse().find(row => row[1] !== '-1' && row[1] !== 'Kp');
     const currentKp = parseFloat(recent ? recent[1] : 0);
-
-    /* Cloud cover */
-    const cloudPct = weatherData.current?.cloud_cover ?? 0;
 
     /* Night status */
     const night = isNightInHobart();
@@ -672,9 +680,15 @@ async function loadData() {
     /* Cloud */
     const cloudEl = document.getElementById('cloud-val');
     cloudEl.classList.remove('skeleton');
-    cloudEl.textContent = cloudPct + '%';
-    cloudEl.style.color = cloudPct > 75 ? '#ef5350' : cloudPct > 40 ? '#ffca28' : '#69f0ae';
-    document.getElementById('cloud-desc').textContent = cloudPct > 75 ? 'Heavy cloud — poor viewing' : cloudPct > 40 ? 'Partly cloudy' : 'Good sky conditions';
+    if (cloudPct === null) {
+      cloudEl.textContent = 'N/A';
+      cloudEl.style.color = 'var(--muted)';
+      document.getElementById('cloud-desc').textContent = 'Weather data unavailable';
+    } else {
+      cloudEl.textContent = cloudPct + '%';
+      cloudEl.style.color = cloudPct > 75 ? '#ef5350' : cloudPct > 40 ? '#ffca28' : '#69f0ae';
+      document.getElementById('cloud-desc').textContent = cloudPct > 75 ? 'Heavy cloud — poor viewing' : cloudPct > 40 ? 'Partly cloudy' : 'Good sky conditions';
+    }
 
     /* Night */
     document.getElementById('night-val').textContent = night ? '🌙 Night time' : '☀️ Daytime';
